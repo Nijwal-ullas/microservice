@@ -1,15 +1,20 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config();
 
 const app = express();
 
-const PORT = Number(process.env.PORT) || 4000;
-const userServiceUrl = process.env.USER_SERVICE_URL || "http://localhost:4002";
+app.use(cors({
+  origin: "http://localhost:5174",
+}));
+
+const PORT = Number(process.env.PORT) || 4010;
+const userServiceUrl = process.env.USER_SERVICE_URL || "http://localhost:4012";
 const productServiceUrl =
-  process.env.PRODUCT_SERVICE_URL || "http://localhost:4003";
+  process.env.PRODUCT_SERVICE_URL || "http://localhost:4013";
 
 app.get("/health", (_req, res) => {
   res.status(200).json({
