@@ -2,6 +2,8 @@
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import Product from "../model/productModel.js";
+import type { AuthRequest } from "../middleware/authMiddleware.js";
+
 
 export const getProducts = async (_req: Request, res: Response) => {
   try {
@@ -12,19 +14,29 @@ export const getProducts = async (_req: Request, res: Response) => {
   }
 };
 
-export const createProduct = async (req: Request, res: Response) => {
+export const createProduct = async (
+  req: AuthRequest,
+  res: Response
+) => {
   try {
-    const { title, price, category, sellerId } = req.body;
+    const { title, price, category } = req.body;
 
     if (
       typeof title !== "string" || !title.trim() ||
       typeof category !== "string" || !category.trim() ||
-      typeof sellerId !== "string" || !sellerId.trim() ||
       typeof price !== "number" ||
       !Number.isFinite(price) || price < 0
     ) {
       return res.status(400).json({
-        message: "Valid title, price, category and sellerId are required",
+        message: "Valid title, price and category are required",
+      });
+    }
+
+    const sellerId = req.user?.id;
+
+    if (!sellerId) {
+      return res.status(401).json({
+        message: "Authentication required",
       });
     }
 
@@ -32,15 +44,18 @@ export const createProduct = async (req: Request, res: Response) => {
       title: title.trim(),
       price,
       category: category.trim(),
-      sellerId: sellerId.trim(),
+      sellerId,
     });
 
     return res.status(201).json({
       message: "Product created successfully",
       product,
     });
-  } catch {
-    return res.status(500).json({ message: "Failed to create product" });
+  } catch (error) {
+    console.error("Create product error:", error);
+    return res.status(500).json({
+      message: "Failed to create product",
+    });
   }
 };
 
