@@ -7,11 +7,15 @@ export interface User {
   email: string;
 }
 
-interface AuthResponse {
-  success: boolean;
-  message?: string;
+interface RegisterResponse {
+  message: string;
+  user: User;
+}
+
+interface LoginResponse {
+  message: string;
   token: string;
-  user?: User;
+  user: User;
 }
 
 export interface RegisterData {
@@ -27,8 +31,8 @@ export interface LoginData {
 
 export const registerUser = async (
   data: RegisterData
-): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>(
+): Promise<RegisterResponse> => {
+  const response = await api.post<RegisterResponse>(
     "/users/register",
     data
   );
@@ -38,8 +42,8 @@ export const registerUser = async (
 
 export const loginUser = async (
   data: LoginData
-): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>(
+): Promise<LoginResponse> => {
+  const response = await api.post<LoginResponse>(
     "/users/login",
     data
   );

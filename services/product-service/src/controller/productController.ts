@@ -1,9 +1,7 @@
-
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import Product from "../model/productModel.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
-
 
 export const getProducts = async (_req: Request, res: Response) => {
   try {
@@ -14,18 +12,18 @@ export const getProducts = async (_req: Request, res: Response) => {
   }
 };
 
-export const createProduct = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const createProduct = async (req: AuthRequest, res: Response) => {
   try {
     const { title, price, category } = req.body;
 
     if (
-      typeof title !== "string" || !title.trim() ||
-      typeof category !== "string" || !category.trim() ||
+      typeof title !== "string" ||
+      !title.trim() ||
+      typeof category !== "string" ||
+      !category.trim() ||
       typeof price !== "number" ||
-      !Number.isFinite(price) || price < 0
+      !Number.isFinite(price) ||
+      price < 0
     ) {
       return res.status(400).json({
         message: "Valid title, price and category are required",
@@ -77,20 +75,41 @@ export const getProductById = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteProduct = async (req: AuthRequest, res: Response) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid product ID" });
+      return res.status(400).json({
+        message: "Invalid product ID",
+      });
     }
 
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const sellerId = req.user?.id;
+
+    if (!sellerId) {
+      return res.status(401).json({
+        message: "Authentication required",
+      });
+    }
+
+    const product = await Product.findOneAndDelete({
+      _id: req.params.id,
+      sellerId,
+    });
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({
+        message: "Product not found or you are not the owner",
+      });
     }
 
-    return res.status(200).json({ message: "Product deleted successfully" });
-  } catch {
-    return res.status(500).json({ message: "Failed to delete product" });
+    return res.status(200).json({
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete product error:", error);
+
+    return res.status(500).json({
+      message: "Failed to delete product",
+    });
   }
 };

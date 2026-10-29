@@ -1,8 +1,7 @@
-
-import Login from "./pages/Login";
+import Products from "./pages/Products";
 
 function App() {
-  return <Login />;
+  return <Products />;
 }
 
 export default App;
