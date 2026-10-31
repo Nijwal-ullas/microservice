@@ -2,6 +2,75 @@ import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../model/userModel.js";
+import mongoose from "mongoose";
+
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        message: "Invalid user ID",
+      });
+    }
+
+    const user = await User.findById(id).select("name email");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    });
+  } catch (error) {
+    console.error("Get user error:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch user",
+    });
+  }
+};
+
+export const getUsersByIds = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+
+    if (
+      !Array.isArray(ids) ||
+      !ids.every(
+        (id) =>
+          typeof id === "string" &&
+          mongoose.isValidObjectId(id)
+      )
+    ) {
+      return res.status(400).json({
+        message: "Valid user IDs are required",
+      });
+    }
+
+    const users = await User.find({
+      _id: { $in: ids },
+    }).select("name");
+
+    return res.status(200).json(
+      users.map((user) => ({
+        id: user._id.toString(),
+        name: user.name,
+      }))
+    );
+  } catch (error) {
+    console.error("Fetch users error:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch users",
+    });
+  }
+};
 
 export const register = async (req: Request, res: Response) => {
   try {

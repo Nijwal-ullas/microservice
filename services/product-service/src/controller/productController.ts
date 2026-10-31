@@ -2,15 +2,49 @@ import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import Product from "../model/productModel.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
+import { getUsersByIds } from "../services/userService.js";
 
-export const getProducts = async (_req: Request, res: Response) => {
+
+export const getProducts = async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
-    return res.status(200).json(products);
-  } catch {
-    return res.status(500).json({ message: "Failed to fetch products" });
+    const products = await Product.find().sort({
+      createdAt: -1,
+    });
+
+    const sellerIds = [
+      ...new Set(
+        products.map((product) => product.sellerId.toString())
+      ),
+    ];
+
+    const sellers = await getUsersByIds(sellerIds);
+
+      const result = products.map((product) => {
+      const seller = sellers.find(
+        (seller) =>
+          seller.id === product.sellerId.toString()
+      );
+
+      return {
+        ...product.toObject(),
+        seller: seller || null,
+      };
+    });
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    console.error("Get products error:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch products",
+    });
   }
 };
+
 
 export const createProduct = async (req: AuthRequest, res: Response) => {
   try {
