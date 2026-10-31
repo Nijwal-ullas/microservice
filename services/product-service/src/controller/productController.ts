@@ -4,28 +4,33 @@ import Product from "../model/productModel.js";
 import type { AuthRequest } from "../middleware/authMiddleware.js";
 import { getUsersByIds } from "../services/userService.js";
 
+interface Seller {
+  id: string;
+  name: string;
+}
 
-export const getProducts = async (
-  req: Request,
-  res: Response
-) => {
+
+export const getProducts = async (req: Request, res: Response) => {
   try {
     const products = await Product.find().sort({
       createdAt: -1,
     });
 
     const sellerIds = [
-      ...new Set(
-        products.map((product) => product.sellerId.toString())
-      ),
+      ...new Set(products.map((product) => product.sellerId.toString())),
     ];
 
-    const sellers = await getUsersByIds(sellerIds);
+    let sellers : Seller[] = [];
 
-      const result = products.map((product) => {
+    try {
+      sellers = await getUsersByIds(sellerIds);
+    } catch (error) {
+      console.error("User Service unavailable:", error);
+    }
+
+    const result = products.map((product) => {
       const seller = sellers.find(
-        (seller) =>
-          seller.id === product.sellerId.toString()
+        (seller) => seller.id === product.sellerId.toString(),
       );
 
       return {
@@ -35,7 +40,6 @@ export const getProducts = async (
     });
 
     return res.status(200).json(result);
-
   } catch (error) {
     console.error("Get products error:", error);
 
@@ -44,7 +48,6 @@ export const getProducts = async (
     });
   }
 };
-
 
 export const createProduct = async (req: AuthRequest, res: Response) => {
   try {

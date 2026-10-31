@@ -40,21 +40,18 @@ export const getUsersByIds = async (req: Request, res: Response) => {
   try {
     const { ids } = req.body;
 
-    if (
-      !Array.isArray(ids) ||
-      !ids.every(
-        (id) =>
-          typeof id === "string" &&
-          mongoose.isValidObjectId(id)
-      )
-    ) {
-      return res.status(400).json({
-        message: "Valid user IDs are required",
-      });
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ message: "ids array is required" });
+    }
+
+    const validIds = ids.filter((id) => typeof id === "string" && mongoose.isValidObjectId(id));
+
+    if (validIds.length === 0) {
+      return res.status(200).json([]);
     }
 
     const users = await User.find({
-      _id: { $in: ids },
+      _id: { $in: validIds },
     }).select("name");
 
     return res.status(200).json(
@@ -65,12 +62,10 @@ export const getUsersByIds = async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Fetch users error:", error);
-
-    return res.status(500).json({
-      message: "Failed to fetch users",
-    });
+    return res.status(500).json({ message: "Failed to fetch users" });
   }
 };
+
 
 export const register = async (req: Request, res: Response) => {
   try {

@@ -42,6 +42,7 @@ export default function Products() {
               <h2>{product.title}</h2>
               <p>Price: ₹{product.price}</p>
               <p>Category: {product.category}</p>
+              <p>Seller: {product.seller ? product.seller.name : "N/A"}</p>
             </article>
           ))}
         </div>

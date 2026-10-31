@@ -12,6 +12,7 @@ export interface Product {
   price: number;
   category: string;
   sellerId: string;
+  seller?: { id: string; name: string } | null;
 }
 
 export const createProduct = async (
